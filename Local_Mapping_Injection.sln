@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.10.35004.147
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Local_Mapping_Injection", "Local_Mapping_Injection\Local_Mapping_Injection.vcxproj", "{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Debug|x64.ActiveCfg = Debug|x64
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Debug|x64.Build.0 = Debug|x64
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Debug|x86.ActiveCfg = Debug|Win32
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Debug|x86.Build.0 = Debug|Win32
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Release|x64.ActiveCfg = Release|x64
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Release|x64.Build.0 = Release|x64
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Release|x86.ActiveCfg = Release|Win32
+		{B6994FFD-EFA9-42A8-8AFF-7BF685102D3D}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8E08199A-44C3-4B67-87DA-0D33034C84BD}
+	EndGlobalSection
+EndGlobal
