@@ -13,11 +13,9 @@
 
 ### 1. **Local Mapping Injection**
    - A local injection technique where the injector maps memory within its own process and then injects code into a specified process.
-   - Uses `VirtualAlloc` and `CreateRemoteThread` for execution within the injector's own process.
   
 ### 2. **Remote Injection**
    - A remote injection technique that targets an external process.
-   - Uses `VirtualAllocEx`, `WriteProcessMemory`, and `CreateRemoteThread` to inject code into a remote process and run it from the target's memory space.
   
 ---
 
@@ -26,14 +24,12 @@
 - **Local Mapping Injection**: Allocates memory within the injector's own process to execute code.
 - **Remote Injection**: Allocates and injects code into a remote process and executes the injected payload using `CreateRemoteThread`.
 - **Shellcode Execution**: Executes arbitrary shellcode within the local or remote process.
-- **Memory Management**: Manages memory allocation securely and changes memory protection using functions like `VirtualAlloc` and `VirtualProtect`.
+- **Memory Management**: Manages memory allocation securely and changes memory protection using functions like `Mapviewoffile` 
 - **Debugging Support**: Adds process control via debugging mechanisms for better control over injected processes.
 
 ---
 
 ## Code Highlights
-
-- **Memory Allocation**: Uses `VirtualAlloc` for local mapping and `VirtualAllocEx` for remote processes to allocate memory for the payload.
 - **Shellcode Writing**: Injects shellcode with `WriteProcessMemory` in the case of remote injection.
 - **Thread Creation**: Executes shellcode by creating a new thread in the target process using `CreateRemoteThread`.
 - **Protection Change**: Modifies memory protection to `PAGE_EXECUTE_READWRITE` for safe code execution.
