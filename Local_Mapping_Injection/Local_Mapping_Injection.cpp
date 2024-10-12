@@ -8,6 +8,11 @@
 
 #pragma comment (lib, "OneCore.lib")
 
+//comment this to use local injection
+#define USE_REMOTE_INJECTION
+
+
+
 BOOL localmappinjection(IN PBYTE pPayload,OUT PVOID*ppAddress,IN SIZE_T sPayloadSize) {
 
 	HANDLE hFile = NULL;
@@ -195,6 +200,9 @@ int main(int argc,char* argv[]) {
 	PVOID	pAddress = NULL;
 	HANDLE	hThread = NULL;
 
+
+#ifdef USE_REMOTE_INJECTION
+
 	//Remote mapping injection
 	if (argc < 2) {
 		printf("Usage: <exe> <Process Name>\n");
@@ -255,7 +263,8 @@ int main(int argc,char* argv[]) {
 
 
 	//This is the Local mapping injection
-	
+#else
+
 	if (!localmappinjection(Payload, &pAddress,sizeof(Payload))) {
 		return -1;
 	}
@@ -279,7 +288,8 @@ int main(int argc,char* argv[]) {
 
 	printf("[#] Press <Enter> To Quit ... ");
 	getchar();
-		
+#endif
+
 	return 0;
 }
 
